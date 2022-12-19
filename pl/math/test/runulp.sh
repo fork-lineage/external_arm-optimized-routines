@@ -11,102 +11,64 @@ set -eu
 # cd to bin directory.
 cd "${0%/*}"
 
-rmodes='n'
 flags="${ULPFLAGS:--q}"
 emu="$@"
+
+# Enable SVE testing
+WANT_SVE_MATH=${WANT_SVE_MATH:-0}
 
 FAIL=0
 PASS=0
 
 t() {
-	[ $r = "n" ] && Lt=$L || Lt=$Ldir
-	$emu ./ulp -r $r -e $Lt $flags "$@" && PASS=$((PASS+1)) || FAIL=$((FAIL+1))
+	key=$(cat $ALIASES | { grep " $1$" || echo $1; } | awk '{print $1}')
+	L=$(cat $LIMITS | grep "^$key " | awk '{print $2}')
+	[[ $L =~ ^[0-9]+\.[0-9]+$ ]]
+	extra_flags=""
+	[[ -z "${5:-}" ]] || extra_flags="$extra_flags -c $5"
+	grep -q "^$key$" $FENV || extra_flags="$extra_flags -f"
+	$emu ./ulp -e $L $flags ${extra_flags} $1 $2 $3 $4 && PASS=$((PASS+1)) || FAIL=$((FAIL+1))
 }
 
 check() {
 	$emu ./ulp -f -q "$@" #>/dev/null
 }
 
-Ldir=0.5
-for r in $rmodes
-do
-
-L=0.6
-Ldir=0.9
-t erff  0      0xffff0000 10000
-t erff  0x1p-127  0x1p-26 40000
-t erff -0x1p-127 -0x1p-26 40000
-t erff  0x1p-26   0x1p3   40000
-t erff -0x1p-26  -0x1p3   40000
-t erff  0         inf     40000
-
-L=0.30
-Ldir=
-t log10f  0      0xffff0000 10000
-t log10f  0x1p-127  0x1p-26 50000
-t log10f  0x1p-26   0x1p3   50000
-t log10f  0x1p-4    0x1p4   50000
-t log10f  0         inf     50000
-
-L=1.15
-Ldir=
-t log10  0 0xffff000000000000 10000
-t log10  0x1p-4    0x1p4      40000
-t log10  0         inf        40000
-
-done
+# Regression-test for correct NaN handling in atan2
+check atan2 0x1p-1022 0x1p-1000 x 0 0x1p-1022 40000
+check atan2 0x1.7887a0a717aefp+1017 0x1.7887a0a717aefp+1017 x -nan -nan
+check atan2 nan nan x -nan -nan
 
 # vector functions
-Ldir=0.5
-r='n'
-flags="${ULPFLAGS:--q} -f"
+flags="${ULPFLAGS:--q}"
 runs=
 check __s_log10f 1 && runs=1
 runv=
 check __v_log10f 1 && runv=1
 runvn=
 check __vn_log10f 1 && runvn=1
+runsv=
+if [ $WANT_SVE_MATH -eq 1 ]; then
+check __sv_cosf 0 && runsv=1
+check __sv_cos  0 && runsv=1
+check __sv_sinf 0 && runsv=1
+check __sv_sin 0 && runsv=1
+# No guarantees about powi accuracy, so regression-test for exactness
+# w.r.t. the custom reference impl in ulp_wrappers.h
+check -q -f -e 0 __sv_powif  0  inf x  0  1000 100000 && runsv=1
+check -q -f -e 0 __sv_powif -0 -inf x  0  1000 100000 && runsv=1
+check -q -f -e 0 __sv_powif  0  inf x -0 -1000 100000 && runsv=1
+check -q -f -e 0 __sv_powif -0 -inf x -0 -1000 100000 && runsv=1
+check -q -f -e 0 __sv_powi   0  inf x  0  1000 100000 && runsv=1
+check -q -f -e 0 __sv_powi  -0 -inf x  0  1000 100000 && runsv=1
+check -q -f -e 0 __sv_powi   0  inf x -0 -1000 100000 && runsv=1
+check -q -f -e 0 __sv_powi  -0 -inf x -0 -1000 100000 && runsv=1
+fi
 
-range_log10='
-  0 0xffff000000000000 10000
-  0x1p-4     0x1p4     400000
-  0          inf       400000
-'
-
-range_log10f='
- 0    0xffff0000    10000
- 0x1p-4    0x1p4    500000
-'
-# error limits
-L_log10=1.16
-L_log10f=2.81
-
-while read G F R
+cat $INTERVALS | while read F LO HI N C
 do
-	[ "$R" = 1 ] || continue
-	case "$G" in \#*) continue ;; esac
-	eval range="\${range_$G}"
-	eval L="\${L_$G}"
-	while read X
-	do
-		[ -n "$X" ] || continue
-		case "$X" in \#*) continue ;; esac
-		t $F $X
-	done << EOF
-$range
-EOF
-done << EOF
-# group symbol run
-log10  __s_log10       $runs
-log10  __v_log10       $runv
-log10  __vn_log10      $runvn
-log10  _ZGVnN2v_log10  $runvn
-
-log10f __s_log10f      $runs
-log10f __v_log10f      $runv
-log10f __vn_log10f     $runvn
-log10f _ZGVnN4v_log10f $runvn
-EOF
+	t $F $LO $HI $N $C
+done
 
 [ 0 -eq $FAIL ] || {
 	echo "FAILED $FAIL PASSED $PASS"

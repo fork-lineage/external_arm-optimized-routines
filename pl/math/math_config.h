@@ -336,7 +336,7 @@ extern const struct logf_data
 /* Data for low accuracy log10 (with 1/ln(10) included in coefficients).  */
 #define LOG10_TABLE_BITS 7
 #define LOG10_POLY_ORDER 6
-#define LOG10_POLY1_ORDER 10
+#define LOG10_POLY1_ORDER 12
 extern const struct log10_data
 {
   double ln2hi;
@@ -349,5 +349,214 @@ extern const struct log10_data
   struct {double chi, clo;} tab2[1 << LOG10_TABLE_BITS];
 #endif
 } __log10_data HIDDEN;
+
+#define EXP_TABLE_BITS 7
+#define EXP_POLY_ORDER 5
+/* Use polynomial that is optimized for a wider input range.  This may be
+   needed for good precision in non-nearest rounding and !TOINT_INTRINSICS.  */
+#define EXP_POLY_WIDE 0
+/* Use close to nearest rounding toint when !TOINT_INTRINSICS.  This may be
+   needed for good precision in non-nearest rouning and !EXP_POLY_WIDE.  */
+#define EXP_USE_TOINT_NARROW 0
+#define EXP2_POLY_ORDER 5
+#define EXP2_POLY_WIDE 0
+extern const struct exp_data
+{
+  double invln2N;
+  double shift;
+  double negln2hiN;
+  double negln2loN;
+  double poly[4]; /* Last four coefficients.  */
+  double exp2_shift;
+  double exp2_poly[EXP2_POLY_ORDER];
+  uint64_t tab[2*(1 << EXP_TABLE_BITS)];
+} __exp_data HIDDEN;
+
+#define ERFC_NUM_INTERVALS 20
+#define ERFC_POLY_ORDER 12
+extern const struct erfc_data
+{
+  double interval_bounds[ERFC_NUM_INTERVALS + 1];
+  double poly[ERFC_NUM_INTERVALS][ERFC_POLY_ORDER + 1];
+} __erfc_data HIDDEN;
+extern const struct v_erfc_data
+{
+  double interval_bounds[ERFC_NUM_INTERVALS + 1];
+  double poly[ERFC_NUM_INTERVALS + 1][ERFC_POLY_ORDER + 1];
+}  __v_erfc_data HIDDEN;
+
+#define ERFCF_POLY_NCOEFFS 16
+extern const struct erfcf_poly_data
+{
+  double poly[4][ERFCF_POLY_NCOEFFS];
+} __erfcf_poly_data HIDDEN;
+
+#define V_EXP_TAIL_TABLE_BITS 8
+extern const uint64_t __v_exp_tail_data[1 << V_EXP_TAIL_TABLE_BITS] HIDDEN;
+
+#define V_ERF_NINTS 49
+#define V_ERF_NCOEFFS 10
+extern const struct v_erf_data
+{
+  double shifts[V_ERF_NINTS];
+  double coeffs[V_ERF_NCOEFFS][V_ERF_NINTS];
+} __v_erf_data HIDDEN;
+
+#define V_ERFF_NCOEFFS 7
+extern const struct v_erff_data
+{
+  float coeffs[V_ERFF_NCOEFFS][2];
+} __v_erff_data HIDDEN;
+
+#define ATAN_POLY_NCOEFFS 20
+extern const struct atan_poly_data
+{
+  double poly[ATAN_POLY_NCOEFFS];
+} __atan_poly_data HIDDEN;
+
+#define ATANF_POLY_NCOEFFS 8
+extern const struct atanf_poly_data
+{
+  float poly[ATANF_POLY_NCOEFFS];
+} __atanf_poly_data HIDDEN;
+
+#define ASINHF_NCOEFFS 8
+extern const struct asinhf_data
+{
+  float coeffs[ASINHF_NCOEFFS];
+} __asinhf_data HIDDEN;
+
+#define LOG_TABLE_BITS 7
+#define LOG_POLY_ORDER 6
+#define LOG_POLY1_ORDER 12
+extern const struct log_data
+{
+  double ln2hi;
+  double ln2lo;
+  double poly[LOG_POLY_ORDER - 1]; /* First coefficient is 1.  */
+  double poly1[LOG_POLY1_ORDER - 1];
+  struct
+  {
+    double invc, logc;
+  } tab[1 << LOG_TABLE_BITS];
+#if !HAVE_FAST_FMA
+  struct
+  {
+    double chi, clo;
+  } tab2[1 << LOG_TABLE_BITS];
+#endif
+} __log_data HIDDEN;
+
+#define ASINH_NCOEFFS 18
+extern const struct asinh_data
+{
+  double poly[ASINH_NCOEFFS];
+} __asinh_data HIDDEN;
+
+#define LOG1P_NCOEFFS 19
+extern const struct log1p_data
+{
+  double coeffs[LOG1P_NCOEFFS];
+} __log1p_data HIDDEN;
+
+#define LOG1PF_2U5
+#define V_LOG1PF_2U5
+#define LOG1PF_NCOEFFS 9
+extern const struct log1pf_data
+{
+  float coeffs[LOG1PF_NCOEFFS];
+} __log1pf_data HIDDEN;
+
+#define TANF_P_POLY_NCOEFFS 7
+/* cotan approach needs order 3 on [0, pi/4] to reach <3.5ulps.  */
+#define TANF_Q_POLY_NCOEFFS 4
+extern const struct tanf_poly_data
+{
+  float poly_tan[TANF_P_POLY_NCOEFFS];
+  float poly_cotan[TANF_Q_POLY_NCOEFFS];
+} __tanf_poly_data HIDDEN;
+
+#define V_LOG2F_TABLE_BITS 4
+#define V_LOG2F_POLY_ORDER 4
+extern const struct v_log2f_data
+{
+  struct
+  {
+    /* Pad with dummy for quad-aligned memory access.  */
+    float invc_hi, invc_lo, logc, dummy;
+  } tab[1 << V_LOG2F_TABLE_BITS];
+  float poly[V_LOG2F_POLY_ORDER];
+} __v_log2f_data HIDDEN;
+
+#define V_LOG2_TABLE_BITS 7
+#define V_LOG2_POLY_ORDER 6
+extern const struct v_log2_data
+{
+  double poly[V_LOG2_POLY_ORDER - 1];
+  struct
+  {
+    double invc, log2c;
+  } tab[1 << V_LOG2_TABLE_BITS];
+} __v_log2_data HIDDEN;
+
+#define V_SINF_NCOEFFS 4
+extern const struct sv_sinf_data
+{
+  float coeffs[V_SINF_NCOEFFS];
+} __sv_sinf_data HIDDEN;
+
+#define V_LOG10_TABLE_BITS 7
+#define V_LOG10_POLY_ORDER 6
+extern const struct v_log10_data
+{
+  struct
+  {
+    double invc, log10c;
+  } tab[1 << V_LOG10_TABLE_BITS];
+  double poly[V_LOG10_POLY_ORDER - 1];
+  double invln10, log10_2;
+} __v_log10_data HIDDEN;
+
+#define V_LOG10F_POLY_ORDER 9
+extern const float __v_log10f_poly[V_LOG10F_POLY_ORDER - 1] HIDDEN;
+
+#define SV_LOGF_POLY_ORDER 8
+extern const float __sv_logf_poly[SV_LOGF_POLY_ORDER - 1] HIDDEN;
+
+#define SV_LOG_POLY_ORDER 6
+#define SV_LOG_TABLE_BITS 7
+extern const struct sv_log_data
+{
+  double invc[1 << SV_LOG_TABLE_BITS];
+  double logc[1 << SV_LOG_TABLE_BITS];
+  double poly[SV_LOG_POLY_ORDER - 1];
+} __sv_log_data HIDDEN;
+
+#ifndef SV_EXPF_USE_FEXPA
+#define SV_EXPF_USE_FEXPA 0
+#endif
+#define SV_EXPF_POLY_ORDER 6
+extern const float __sv_expf_poly[SV_EXPF_POLY_ORDER - 1] HIDDEN;
+
+#define EXPM1F_POLY_ORDER 5
+extern const float __expm1f_poly[EXPM1F_POLY_ORDER] HIDDEN;
+
+#define EXPF_TABLE_BITS 5
+#define EXPF_POLY_ORDER 3
+extern const struct expf_data
+{
+  uint64_t tab[1 << EXPF_TABLE_BITS];
+  double invln2_scaled;
+  double poly_scaled[EXPF_POLY_ORDER];
+} __expf_data HIDDEN;
+
+#define EXPM1_POLY_ORDER 11
+extern const double __expm1_poly[EXPM1_POLY_ORDER] HIDDEN;
+
+extern const struct cbrtf_data
+{
+  float poly[4];
+  float table[5];
+} __cbrtf_data HIDDEN;
 
 #endif

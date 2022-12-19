@@ -173,6 +173,32 @@ v_abs_f32 (v_f32_t x)
 {
   return __builtin_fabsf (x);
 }
+static inline v_u32_t
+v_bsl_u32 (v_u32_t m, v_u32_t x, v_u32_t y)
+{
+  return (y & ~m) | (x & m);
+}
+static inline v_u32_t
+v_cagt_f32 (v_f32_t x, v_f32_t y)
+{
+  return fabsf (x) > fabsf (y);
+}
+/* to wrap |x| >= |y|.  */
+static inline v_u32_t
+v_cage_f32 (v_f32_t x, v_f32_t y)
+{
+  return fabsf (x) >= fabsf (y);
+}
+static inline v_u32_t
+v_calt_f32 (v_f32_t x, v_f32_t y)
+{
+  return fabsf (x) < fabsf (y);
+}
+static inline v_f32_t
+v_div_f32 (v_f32_t x, v_f32_t y)
+{
+  return x / y;
+}
 static inline v_f32_t
 v_fma_f32 (v_f32_t x, v_f32_t y, v_f32_t z)
 {
@@ -188,9 +214,29 @@ v_round_s32 (v_f32_t x)
 {
   return __builtin_lroundf (x); /* relies on -fno-math-errno.  */
 }
+static inline v_f32_t
+v_sel_f32 (v_u32_t p, v_f32_t x, v_f32_t y)
+{
+  return p ? x : y;
+}
+static inline v_u32_t
+v_sel_u32 (v_u32_t p, v_u32_t x, v_u32_t y)
+{
+  return p ? x : y;
+}
+static inline v_f32_t
+v_sqrt_f32 (v_f32_t x)
+{
+  return __builtin_sqrtf (x);
+}
 /* convert to type1 from type2.  */
 static inline v_f32_t
 v_to_f32_s32 (v_s32_t x)
+{
+  return x;
+}
+static inline v_s32_t
+v_to_s32_f32 (v_f32_t x)
 {
   return x;
 }
@@ -204,6 +250,16 @@ static inline v_u32_t
 v_as_u32_f32 (v_f32_t x)
 {
   union { v_f32_t f; v_u32_t u; } r = {x};
+  return r.u;
+}
+static inline v_s32_t
+v_as_s32_f32 (v_f32_t x)
+{
+  union
+  {
+    v_f32_t f;
+    v_s32_t u;
+  } r = {x};
   return r.u;
 }
 static inline v_f32_t
@@ -282,6 +338,12 @@ v_any_u64 (v_u64_t x)
 {
   return x != 0;
 }
+/* true if all elements of a v_cond result is non-zero.  */
+static inline int
+v_all_u64 (v_u64_t x)
+{
+  return x;
+}
 /* to wrap the result of relational operators.  */
 static inline v_u64_t
 v_cond_u64 (v_u64_t x)
@@ -293,20 +355,54 @@ v_abs_f64 (v_f64_t x)
 {
   return __builtin_fabs (x);
 }
+static inline v_u64_t
+v_bsl_u64 (v_u64_t m, v_u64_t x, v_u64_t y)
+{
+  return (y & ~m) | (x & m);
+}
+static inline v_u64_t
+v_cagt_f64 (v_f64_t x, v_f64_t y)
+{
+  return fabs (x) > fabs (y);
+}
+static inline v_f64_t
+v_div_f64 (v_f64_t x, v_f64_t y)
+{
+  return x / y;
+}
 static inline v_f64_t
 v_fma_f64 (v_f64_t x, v_f64_t y, v_f64_t z)
 {
   return __builtin_fma (x, y, z);
 }
 static inline v_f64_t
+v_min_f64(v_f64_t x, v_f64_t y) {
+  return x < y ? x : y;
+}
+static inline v_f64_t
 v_round_f64 (v_f64_t x)
 {
   return __builtin_round (x);
+}
+static inline v_f64_t
+v_sel_f64 (v_u64_t p, v_f64_t x, v_f64_t y)
+{
+  return p ? x : y;
+}
+static inline v_f64_t
+v_sqrt_f64 (v_f64_t x)
+{
+  return __builtin_sqrt (x);
 }
 static inline v_s64_t
 v_round_s64 (v_f64_t x)
 {
   return __builtin_lround (x); /* relies on -fno-math-errno.  */
+}
+static inline v_u64_t
+v_trunc_u64 (v_f64_t x)
+{
+  return __builtin_trunc (x);
 }
 /* convert to type1 from type2.  */
 static inline v_f64_t
@@ -316,6 +412,12 @@ v_to_f64_s64 (v_s64_t x)
 }
 static inline v_f64_t
 v_to_f64_u64 (v_u64_t x)
+{
+  return x;
+}
+
+static inline v_s64_t
+v_to_s64_f64 (v_f64_t x)
 {
   return x;
 }
@@ -358,6 +460,12 @@ static inline v_f64_t
 v_call_f64 (f64_t (*f) (f64_t), v_f64_t x, v_f64_t y, v_u64_t p)
 {
   return f (x);
+}
+static inline v_f64_t
+v_call2_f64 (f64_t (*f) (f64_t, f64_t), v_f64_t x1, v_f64_t x2, v_f64_t y,
+	     v_u64_t p)
+{
+  return f (x1, x2);
 }
 
 #elif __aarch64__
@@ -442,6 +550,32 @@ v_abs_f32 (v_f32_t x)
 {
   return vabsq_f32 (x);
 }
+static inline v_u32_t
+v_bsl_u32 (v_u32_t m, v_u32_t x, v_u32_t y)
+{
+  return vbslq_u32 (m, x, y);
+}
+static inline v_u32_t
+v_cagt_f32 (v_f32_t x, v_f32_t y)
+{
+  return vcagtq_f32 (x, y);
+}
+/* to wrap |x| >= |y|.  */
+static inline v_u32_t
+v_cage_f32 (v_f32_t x, v_f32_t y)
+{
+  return vcageq_f32 (x, y);
+}
+static inline v_u32_t
+v_calt_f32 (v_f32_t x, v_f32_t y)
+{
+  return vcaltq_f32 (x, y);
+}
+static inline v_f32_t
+v_div_f32 (v_f32_t x, v_f32_t y)
+{
+  return vdivq_f32 (x, y);
+}
 static inline v_f32_t
 v_fma_f32 (v_f32_t x, v_f32_t y, v_f32_t z)
 {
@@ -457,11 +591,31 @@ v_round_s32 (v_f32_t x)
 {
   return vcvtaq_s32_f32 (x);
 }
+static inline v_f32_t
+v_sel_f32 (v_u32_t p, v_f32_t x, v_f32_t y)
+{
+  return vbslq_f32 (p, x, y);
+}
+static inline v_u32_t
+v_sel_u32 (v_u32_t p, v_u32_t x, v_u32_t y)
+{
+  return vbslq_u32 (p, x, y);
+}
+static inline v_f32_t
+v_sqrt_f32 (v_f32_t x)
+{
+  return vsqrtq_f32 (x);
+}
 /* convert to type1 from type2.  */
 static inline v_f32_t
 v_to_f32_s32 (v_s32_t x)
 {
   return (v_f32_t){x[0], x[1], x[2], x[3]};
+}
+static inline v_s32_t
+v_to_s32_f32 (v_f32_t x)
+{
+  return vcvtq_s32_f32 (x);
 }
 static inline v_f32_t
 v_to_f32_u32 (v_u32_t x)
@@ -473,6 +627,16 @@ static inline v_u32_t
 v_as_u32_f32 (v_f32_t x)
 {
   union { v_f32_t f; v_u32_t u; } r = {x};
+  return r.u;
+}
+static inline v_s32_t
+v_as_s32_f32 (v_f32_t x)
+{
+  union
+  {
+    v_f32_t f;
+    v_s32_t u;
+  } r = {x};
   return r.u;
 }
 static inline v_f32_t
@@ -555,6 +719,13 @@ v_any_u64 (v_u64_t x)
   /* assume elements in x are either 0 or -1u.  */
   return vpaddd_u64 (x) != 0;
 }
+/* true if all elements of a v_cond result is 1.  */
+static inline int
+v_all_u64 (v_u64_t x)
+{
+  /* assume elements in x are either 0 or -1u.  */
+  return vpaddd_s64 (vreinterpretq_s64_u64 (x)) == -2;
+}
 /* to wrap the result of relational operators.  */
 static inline v_u64_t
 v_cond_u64 (v_u64_t x)
@@ -566,20 +737,54 @@ v_abs_f64 (v_f64_t x)
 {
   return vabsq_f64 (x);
 }
+static inline v_u64_t
+v_bsl_u64 (v_u64_t m, v_u64_t x, v_u64_t y)
+{
+  return vbslq_u64 (m, x, y);
+}
+static inline v_u64_t
+v_cagt_f64 (v_f64_t x, v_f64_t y)
+{
+  return vcagtq_f64 (x, y);
+}
+static inline v_f64_t
+v_div_f64 (v_f64_t x, v_f64_t y)
+{
+  return vdivq_f64 (x, y);
+}
 static inline v_f64_t
 v_fma_f64 (v_f64_t x, v_f64_t y, v_f64_t z)
 {
   return vfmaq_f64 (z, x, y);
 }
 static inline v_f64_t
+v_min_f64(v_f64_t x, v_f64_t y) {
+  return vminq_f64(x, y);
+}
+static inline v_f64_t
 v_round_f64 (v_f64_t x)
 {
   return vrndaq_f64 (x);
+}
+static inline v_f64_t
+v_sel_f64 (v_u64_t p, v_f64_t x, v_f64_t y)
+{
+  return vbslq_f64 (p, x, y);
+}
+static inline v_f64_t
+v_sqrt_f64 (v_f64_t x)
+{
+  return vsqrtq_f64 (x);
 }
 static inline v_s64_t
 v_round_s64 (v_f64_t x)
 {
   return vcvtaq_s64_f64 (x);
+}
+static inline v_u64_t
+v_trunc_u64 (v_f64_t x)
+{
+  return vcvtq_u64_f64 (x);
 }
 /* convert to type1 from type2.  */
 static inline v_f64_t
@@ -591,6 +796,11 @@ static inline v_f64_t
 v_to_f64_u64 (v_u64_t x)
 {
   return (v_f64_t){x[0], x[1]};
+}
+static inline v_s64_t
+v_to_s64_f64 (v_f64_t x)
+{
+  return vcvtq_s64_f64 (x);
 }
 /* reinterpret as type1 from type2.  */
 static inline v_u64_t
@@ -631,6 +841,13 @@ static inline v_f64_t
 v_call_f64 (f64_t (*f) (f64_t), v_f64_t x, v_f64_t y, v_u64_t p)
 {
   return (v_f64_t){p[0] ? f (x[0]) : y[0], p[1] ? f (x[1]) : y[1]};
+}
+static inline v_f64_t
+v_call2_f64 (f64_t (*f) (f64_t, f64_t), v_f64_t x1, v_f64_t x2, v_f64_t y,
+	     v_u64_t p)
+{
+  return (v_f64_t){p[0] ? f (x1[0], x2[0]) : y[0],
+		   p[1] ? f (x1[1], x2[1]) : y[1]};
 }
 #endif
 

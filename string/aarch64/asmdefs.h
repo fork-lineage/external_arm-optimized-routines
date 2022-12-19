@@ -1,14 +1,12 @@
 /*
- * Macros for asm code.
+ * Macros for asm code.  AArch64 version.
  *
- * Copyright (c) 2019-2020, Arm Limited.
+ * Copyright (c) 2019-2022, Arm Limited.
  * SPDX-License-Identifier: MIT OR Apache-2.0 WITH LLVM-exception
  */
 
 #ifndef _ASMDEFS_H
 #define _ASMDEFS_H
-
-#if defined(__aarch64__)
 
 /* Branch Target Identitication support.  */
 #define BTI_C		hint	34
@@ -54,19 +52,6 @@ GNU_PROPERTY (FEATURE_1_AND, FEATURE_1_BTI|FEATURE_1_PAC)
   name:			\
   .cfi_startproc;	\
   BTI_C;
-
-#else
-
-#define END_FILE
-
-#define ENTRY_ALIGN(name, alignment)	\
-  .global name;		\
-  .type name,%function;	\
-  .align alignment;		\
-  name:			\
-  .cfi_startproc;
-
-#endif
 
 #define ENTRY(name)	ENTRY_ALIGN(name, 6)
 
